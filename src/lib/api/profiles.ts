@@ -28,17 +28,38 @@ export async function listPublicProfiles(limit = 24): Promise<ProfileRow[]> {
 }
 
 /** Update the signed-in user's own profile. Only whitelisted columns are sent. */
-export async function updateProfile(id: string, patch: ProfileUpdate): Promise<ProfileRow> {
+export async function updateProfile(
+  id: string,
+  patch: ProfileUpdate,
+): Promise<ProfileRow> {
   const allowed: ProfileUpdate = {};
+
   if (patch.name !== undefined) allowed.name = patch.name;
   if (patch.location !== undefined) allowed.location = patch.location;
   if (patch.bio !== undefined) allowed.bio = patch.bio;
-  if (patch.profile_photo !== undefined) allowed.profile_photo = patch.profile_photo;
-  if (patch.availability !== undefined) allowed.availability = patch.availability;
+  if (patch.profile_photo !== undefined)
+    allowed.profile_photo = patch.profile_photo;
+  if (patch.availability !== undefined)
+    allowed.availability = patch.availability;
   if (patch.is_public !== undefined) allowed.is_public = patch.is_public;
 
-  const { data, error } = await supabase.from("profiles").update(allowed).eq("id", id).select("*").single();
+  const { error } = await supabase
+    .from("profiles")
+    .update(allowed)
+    .eq("id", id);
+
   if (error) throw error;
+
+  // Fetch the profile separately after updating it.
+  const { data, error: fetchError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) throw fetchError;
+  if (!data) throw new Error("Profile was updated but could not be loaded.");
+
   return data;
 }
 

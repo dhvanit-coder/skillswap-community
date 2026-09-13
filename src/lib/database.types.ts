@@ -8,6 +8,7 @@
 
 export type UserRole = "user" | "admin";
 export type SkillType = "offered" | "wanted";
+export type DbSkillType = "OFFER" | "WANT";
 
 export type ProfileRow = {
   id: string;
@@ -38,15 +39,18 @@ export type UserSkillRow = {
   id: number;
   user_id: string;
   skill_id: number;
-  type: SkillType;
+  type: DbSkillType;
   level: string | null;
   created_at?: string | null;
 }
+
+
 export type UserSkillInsert = Partial<UserSkillRow> & {
   user_id: string;
   skill_id: number;
-  type: SkillType;
+  type: DbSkillType;
 };
+
 export type UserSkillUpdate = Partial<UserSkillRow>;
 
 export type SwapRequestRow = {

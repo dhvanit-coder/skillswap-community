@@ -1,5 +1,10 @@
 import { supabase } from "@/lib/supabase";
-import type { SkillRow, SkillType, UserSkillWithSkill } from "@/lib/database.types";
+import type {
+  SkillRow,
+  SkillType,
+  DbSkillType,
+  UserSkillWithSkill,
+} from "@/lib/database.types";
 
 export const skillKeys = {
   all: ["skills"] as const,
@@ -25,16 +30,34 @@ export async function getUserSkills(userId: string): Promise<UserSkillsByType> {
     .select("*, skill:skills(*)")
     .eq("user_id", userId)
     .order("id", { ascending: true });
+
   if (error) throw error;
+
   const rows = (data ?? []) as unknown as UserSkillWithSkill[];
+
   return {
-    offered: rows.filter((r) => r.type === "offered"),
-    wanted: rows.filter((r) => r.type === "wanted"),
+    offered: rows.filter((r) => r.type === "OFFER"),
+    wanted: rows.filter((r) => r.type === "WANT"),
   };
 }
 
-export async function addUserSkill(userId: string, skillId: number, type: SkillType): Promise<void> {
-  const { error } = await supabase.from("user_skills").insert({ user_id: userId, skill_id: skillId, type });
+
+export async function addUserSkill(
+  userId: string,
+  skillId: number,
+  type: SkillType,
+): Promise<void> {
+  const dbType: DbSkillType =
+    type === "offered" ? "OFFER" : "WANT";
+
+  const { error } = await supabase
+    .from("user_skills")
+    .insert({
+      user_id: userId,
+      skill_id: skillId,
+      type: dbType,
+    });
+
   if (error) throw error;
 }
 
