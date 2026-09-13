@@ -50,3 +50,30 @@ export function skillTone(name: string): "primary" | "tertiary" | "secondary" | 
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
   return tones[Math.abs(hash) % tones.length] ?? "primary";
 }
+
+const SKILL_ICONS: Record<string, string> = {
+  react: "code",
+  javascript: "terminal",
+  html: "data_object",
+  css: "palette",
+  python: "smart_toy",
+  java: "coffee",
+  excel: "table_chart",
+  powerpoint: "slideshow",
+  photoshop: "image",
+  canva: "brush",
+  "graphic design": "design_services",
+  "video editing": "movie_edit",
+  photography: "photo_camera",
+  "digital marketing": "campaign",
+  "social media marketing": "share",
+  "content writing": "edit_note",
+  english: "translate",
+  gujarati: "translate",
+  hindi: "translate",
+};
+
+/** Material Symbol name for a skill, with a sensible fallback. */
+export function skillIcon(name: string): string {
+  return SKILL_ICONS[name.trim().toLowerCase()] ?? "auto_awesome";
+}
