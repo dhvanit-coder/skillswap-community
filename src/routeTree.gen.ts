@@ -10,33 +10,294 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/_admin/route'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
+import { Route as AuthenticatedMySwapsRouteImport } from './routes/_authenticated/my-swaps'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
+import { Route as AuthenticatedSwapRequestsRouteImport } from './routes/_authenticated/swap-requests'
+import { Route as UserIdRouteImport } from './routes/user.$id'
+import { Route as AuthenticatedProfileIndexRouteImport } from './routes/_authenticated/profile/index'
+import { Route as AuthenticatedProfileEditRouteImport } from './routes/_authenticated/profile/edit'
+import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated/_admin/admin/index'
+import { Route as AuthenticatedAdminAdminAnnouncementsRouteImport } from './routes/_authenticated/_admin/admin/announcements'
+import { Route as AuthenticatedAdminAdminReportsRouteImport } from './routes/_authenticated/_admin/admin/reports'
+import { Route as AuthenticatedAdminAdminSkillsRouteImport } from './routes/_authenticated/_admin/admin/skills'
+import { Route as AuthenticatedAdminAdminSwapsRouteImport } from './routes/_authenticated/_admin/admin/swaps'
+import { Route as AuthenticatedAdminAdminUsersRouteImport } from './routes/_authenticated/_admin/admin/users'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMatchesRoute = AuthenticatedMatchesRouteImport.update({
+  id: '/matches',
+  path: '/matches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMySwapsRoute = AuthenticatedMySwapsRouteImport.update({
+  id: '/my-swaps',
+  path: '/my-swaps',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSkillsRoute = AuthenticatedSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSwapRequestsRoute =
+  AuthenticatedSwapRequestsRouteImport.update({
+    id: '/swap-requests',
+    path: '/swap-requests',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const UserIdRoute = UserIdRouteImport.update({
+  id: '/user/$id',
+  path: '/user/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProfileIndexRoute =
+  AuthenticatedProfileIndexRouteImport.update({
+    id: '/profile/',
+    path: '/profile/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProfileEditRoute =
+  AuthenticatedProfileEditRouteImport.update({
+    id: '/profile/edit',
+    path: '/profile/edit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminIndexRoute =
+  AuthenticatedAdminAdminIndexRouteImport.update({
+    id: '/admin/',
+    path: '/admin/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminAnnouncementsRoute =
+  AuthenticatedAdminAdminAnnouncementsRouteImport.update({
+    id: '/admin/announcements',
+    path: '/admin/announcements',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminReportsRoute =
+  AuthenticatedAdminAdminReportsRouteImport.update({
+    id: '/admin/reports',
+    path: '/admin/reports',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminSkillsRoute =
+  AuthenticatedAdminAdminSkillsRouteImport.update({
+    id: '/admin/skills',
+    path: '/admin/skills',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminSwapsRoute =
+  AuthenticatedAdminAdminSwapsRouteImport.update({
+    id: '/admin/swaps',
+    path: '/admin/swaps',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminUsersRoute =
+  AuthenticatedAdminAdminUsersRouteImport.update({
+    id: '/admin/users',
+    path: '/admin/users',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/matches': typeof AuthenticatedMatchesRoute
+  '/my-swaps': typeof AuthenticatedMySwapsRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/skills': typeof AuthenticatedSkillsRoute
+  '/swap-requests': typeof AuthenticatedSwapRequestsRoute
+  '/user/$id': typeof UserIdRoute
+  '/profile/edit': typeof AuthenticatedProfileEditRoute
+  '/profile/': typeof AuthenticatedProfileIndexRoute
+  '/admin/announcements': typeof AuthenticatedAdminAdminAnnouncementsRoute
+  '/admin/reports': typeof AuthenticatedAdminAdminReportsRoute
+  '/admin/skills': typeof AuthenticatedAdminAdminSkillsRoute
+  '/admin/swaps': typeof AuthenticatedAdminAdminSwapsRoute
+  '/admin/users': typeof AuthenticatedAdminAdminUsersRoute
+  '/admin/': typeof AuthenticatedAdminAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/matches': typeof AuthenticatedMatchesRoute
+  '/my-swaps': typeof AuthenticatedMySwapsRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/skills': typeof AuthenticatedSkillsRoute
+  '/swap-requests': typeof AuthenticatedSwapRequestsRoute
+  '/user/$id': typeof UserIdRoute
+  '/profile/edit': typeof AuthenticatedProfileEditRoute
+  '/profile': typeof AuthenticatedProfileIndexRoute
+  '/admin/announcements': typeof AuthenticatedAdminAdminAnnouncementsRoute
+  '/admin/reports': typeof AuthenticatedAdminAdminReportsRoute
+  '/admin/skills': typeof AuthenticatedAdminAdminSkillsRoute
+  '/admin/swaps': typeof AuthenticatedAdminAdminSwapsRoute
+  '/admin/users': typeof AuthenticatedAdminAdminUsersRoute
+  '/admin': typeof AuthenticatedAdminAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_authenticated/_admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/matches': typeof AuthenticatedMatchesRoute
+  '/_authenticated/my-swaps': typeof AuthenticatedMySwapsRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/skills': typeof AuthenticatedSkillsRoute
+  '/_authenticated/swap-requests': typeof AuthenticatedSwapRequestsRoute
+  '/user/$id': typeof UserIdRoute
+  '/_authenticated/profile/edit': typeof AuthenticatedProfileEditRoute
+  '/_authenticated/profile/': typeof AuthenticatedProfileIndexRoute
+  '/_authenticated/_admin/admin/announcements': typeof AuthenticatedAdminAdminAnnouncementsRoute
+  '/_authenticated/_admin/admin/reports': typeof AuthenticatedAdminAdminReportsRoute
+  '/_authenticated/_admin/admin/skills': typeof AuthenticatedAdminAdminSkillsRoute
+  '/_authenticated/_admin/admin/swaps': typeof AuthenticatedAdminAdminSwapsRoute
+  '/_authenticated/_admin/admin/users': typeof AuthenticatedAdminAdminUsersRoute
+  '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/explore'
+    | '/login'
+    | '/register'
+    | '/dashboard'
+    | '/matches'
+    | '/my-swaps'
+    | '/notifications'
+    | '/settings'
+    | '/skills'
+    | '/swap-requests'
+    | '/user/$id'
+    | '/profile/edit'
+    | '/profile/'
+    | '/admin/announcements'
+    | '/admin/reports'
+    | '/admin/skills'
+    | '/admin/swaps'
+    | '/admin/users'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/explore'
+    | '/login'
+    | '/register'
+    | '/dashboard'
+    | '/matches'
+    | '/my-swaps'
+    | '/notifications'
+    | '/settings'
+    | '/skills'
+    | '/swap-requests'
+    | '/user/$id'
+    | '/profile/edit'
+    | '/profile'
+    | '/admin/announcements'
+    | '/admin/reports'
+    | '/admin/skills'
+    | '/admin/swaps'
+    | '/admin/users'
+    | '/admin'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/explore'
+    | '/login'
+    | '/register'
+    | '/_authenticated/_admin'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/matches'
+    | '/_authenticated/my-swaps'
+    | '/_authenticated/notifications'
+    | '/_authenticated/settings'
+    | '/_authenticated/skills'
+    | '/_authenticated/swap-requests'
+    | '/user/$id'
+    | '/_authenticated/profile/edit'
+    | '/_authenticated/profile/'
+    | '/_authenticated/_admin/admin/announcements'
+    | '/_authenticated/_admin/admin/reports'
+    | '/_authenticated/_admin/admin/skills'
+    | '/_authenticated/_admin/admin/swaps'
+    | '/_authenticated/_admin/admin/users'
+    | '/_authenticated/_admin/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ExploreRoute: typeof ExploreRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  UserIdRoute: typeof UserIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +309,217 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_admin': {
+      id: '/_authenticated/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/matches': {
+      id: '/_authenticated/matches'
+      path: '/matches'
+      fullPath: '/matches'
+      preLoaderRoute: typeof AuthenticatedMatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/my-swaps': {
+      id: '/_authenticated/my-swaps'
+      path: '/my-swaps'
+      fullPath: '/my-swaps'
+      preLoaderRoute: typeof AuthenticatedMySwapsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/skills': {
+      id: '/_authenticated/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof AuthenticatedSkillsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/swap-requests': {
+      id: '/_authenticated/swap-requests'
+      path: '/swap-requests'
+      fullPath: '/swap-requests'
+      preLoaderRoute: typeof AuthenticatedSwapRequestsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/user/$id': {
+      id: '/user/$id'
+      path: '/user/$id'
+      fullPath: '/user/$id'
+      preLoaderRoute: typeof UserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/profile/': {
+      id: '/_authenticated/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof AuthenticatedProfileIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile/edit': {
+      id: '/_authenticated/profile/edit'
+      path: '/profile/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof AuthenticatedProfileEditRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/_admin/admin/': {
+      id: '/_authenticated/_admin/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/announcements': {
+      id: '/_authenticated/_admin/admin/announcements'
+      path: '/admin/announcements'
+      fullPath: '/admin/announcements'
+      preLoaderRoute: typeof AuthenticatedAdminAdminAnnouncementsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/reports': {
+      id: '/_authenticated/_admin/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AuthenticatedAdminAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/skills': {
+      id: '/_authenticated/_admin/admin/skills'
+      path: '/admin/skills'
+      fullPath: '/admin/skills'
+      preLoaderRoute: typeof AuthenticatedAdminAdminSkillsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/swaps': {
+      id: '/_authenticated/_admin/admin/swaps'
+      path: '/admin/swaps'
+      fullPath: '/admin/swaps'
+      preLoaderRoute: typeof AuthenticatedAdminAdminSwapsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/users': {
+      id: '/_authenticated/_admin/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAdminAnnouncementsRoute: typeof AuthenticatedAdminAdminAnnouncementsRoute
+  AuthenticatedAdminAdminReportsRoute: typeof AuthenticatedAdminAdminReportsRoute
+  AuthenticatedAdminAdminSkillsRoute: typeof AuthenticatedAdminAdminSkillsRoute
+  AuthenticatedAdminAdminSwapsRoute: typeof AuthenticatedAdminAdminSwapsRoute
+  AuthenticatedAdminAdminUsersRoute: typeof AuthenticatedAdminAdminUsersRoute
+  AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminAdminAnnouncementsRoute:
+      AuthenticatedAdminAdminAnnouncementsRoute,
+    AuthenticatedAdminAdminReportsRoute: AuthenticatedAdminAdminReportsRoute,
+    AuthenticatedAdminAdminSkillsRoute: AuthenticatedAdminAdminSkillsRoute,
+    AuthenticatedAdminAdminSwapsRoute: AuthenticatedAdminAdminSwapsRoute,
+    AuthenticatedAdminAdminUsersRoute: AuthenticatedAdminAdminUsersRoute,
+    AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
+  AuthenticatedMySwapsRoute: typeof AuthenticatedMySwapsRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
+  AuthenticatedSwapRequestsRoute: typeof AuthenticatedSwapRequestsRoute
+  AuthenticatedProfileEditRoute: typeof AuthenticatedProfileEditRoute
+  AuthenticatedProfileIndexRoute: typeof AuthenticatedProfileIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
+  AuthenticatedMySwapsRoute: AuthenticatedMySwapsRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
+  AuthenticatedSwapRequestsRoute: AuthenticatedSwapRequestsRoute,
+  AuthenticatedProfileEditRoute: AuthenticatedProfileEditRoute,
+  AuthenticatedProfileIndexRoute: AuthenticatedProfileIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ExploreRoute: ExploreRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  UserIdRoute: UserIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

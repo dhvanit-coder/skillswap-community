@@ -1,24 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { LandingScreen } from "@/components/screens/LandingScreen";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "SkillSwap — Turn What You Know Into What You Want to Learn" },
+      {
+        name: "description",
+        content: "Join the SkillSwap community to exchange skills peer-to-peer: teach what you know, learn what you love — no money involved.",
+      },
+      { property: "og:title", content: "SkillSwap — Community Skill Exchange" },
+      { property: "og:description", content: "Teach what you know, learn what you love. Find your skill partner on SkillSwap." },
+    ],
+  }),
+  component: HomePage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function HomePage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <AppLayout chrome="public" footer="public">
+      <LandingScreen />
+    </AppLayout>
   );
 }
