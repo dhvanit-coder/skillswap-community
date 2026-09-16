@@ -3,8 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PreviewNotice } from "@/components/PreviewNotice";
 import { MySwapsScreen } from "@/components/screens/MySwapsScreen";
 
-export const Route = createFileRoute("/_authenticated/my-swaps")({
-  head: () => ({
+export const Route = createFileRoute("/_authenticated/my-swaps")({  head: () => ({
     meta: [
       { title: "My Swaps — SkillSwap" },
       { name: "description", content: "Track your active and completed skill swaps and leave feedback." },

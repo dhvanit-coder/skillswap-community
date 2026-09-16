@@ -57,23 +57,21 @@ export type SwapRequestRow = {
   id: number;
   sender_id: string;
   receiver_id: string;
-  offered_skill_id: number | null;
-  wanted_skill_id: number | null;
+  sender_skill: number | null;
+  receiver_skill: number | null;
   status: string;
-  message: string | null;
   created_at: string;
-}
+};
 
 export type RatingRow = {
   id: number;
   swap_id: number | null;
-  rater_id: string;
-  rated_user_id: string;
+  from_user: string;
+  to_user: string;
   rating: number;
   feedback: string | null;
   created_at: string;
-}
-
+};
 export type NotificationRow = {
   id: number;
   user_id: string;

@@ -1,5 +1,25 @@
 /** Imported Stitch screen (11). Static content until its feature phase is implemented. */
+import { useEffect, useState } from "react";
+import { getAdminDashboardStats } from "../../lib/api/admin";
+
 export function AdminDashboardScreen() {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeSwappers: 0,
+    pendingSwaps: 0,
+    completedSwaps: 0,
+    totalSkills: 0,
+    averageRating: 0,
+    totalReviews: 0,
+  });
+
+  useEffect(() => {
+    getAdminDashboardStats()
+      .then(setStats)
+      .catch((error) => {
+        console.error("Failed to load admin dashboard stats:", error);
+      });
+  }, []);
   return (
     <main className="relative w-full bg-background min-h-screen">
       <div className="flex flex-col w-full">

@@ -1,5 +1,137 @@
 /** Imported Stitch screen (8). Static content until its feature phase is implemented. */
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 export function MySwapsScreen() {
+    const [swaps, setSwaps] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<"active" | "history">("active");
+    const [selectedRating, setSelectedRating] = useState(0);
+    const [feedback, setFeedback] = useState("");
+  useEffect(() => {
+    async function loadSwaps() {
+      const activeSwaps = swaps.filter((swap) => swap.status === "ACCEPTED");
+      const historySwaps = swaps.filter((swap) => swap.status === "COMPLETED");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    setLoading(false);
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("swap_requests")
+    .select(`
+      id,
+      sender_id,
+      receiver_id,
+      sender_skill,
+      receiver_skill,
+      status,
+      created_at
+    `)
+    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+    .in("status", ["ACCEPTED", "COMPLETED"])
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("LOAD SWAPS ERROR:", error);
+    setLoading(false);
+    return;
+  }
+
+  const swapsData = data ?? [];
+
+  // Get all user IDs involved in swaps
+  const userIds = [
+    ...new Set(
+      swapsData.flatMap((swap) => [
+        swap.sender_id,
+        swap.receiver_id,
+      ])
+    ),
+  ];
+
+  // Get profiles
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, name, location, rating, profile_photo")
+    .in("id", userIds);
+
+  if (profilesError) {
+    console.error("LOAD SWAP PROFILES ERROR:", profilesError);
+  }
+
+  // Get all skill IDs
+  const skillIds: number[] = [
+  ...new Set(
+    swapsData.flatMap((swap) => [
+      swap.sender_skill,
+      swap.receiver_skill,
+    ])
+  ),
+].filter((id): id is number => id !== null);
+
+  // Get skill names
+  const { data: skills, error: skillsError } = await supabase
+    .from("skills")
+    .select("id, name")
+    .in("id", skillIds);
+
+  if (skillsError) {
+    console.error("LOAD SWAP SKILLS ERROR:", skillsError);
+  }
+
+  const formattedSwaps = swapsData.map((swap) => {
+    const otherUserId =
+      swap.sender_id === user.id
+        ? swap.receiver_id
+        : swap.sender_id;
+
+    const otherUser = profiles?.find(
+      (profile) => profile.id === otherUserId
+    );
+
+    const getSkillName = (skillId: number | null) =>
+      skills?.find((skill) => skill.id === skillId)?.name ?? "Skill";
+
+    // sender_skill = skill the sender wants to learn
+    // receiver_skill = skill the sender offers
+    const youLearn =
+      swap.sender_id === user.id
+        ? getSkillName(swap.sender_skill)
+        : getSkillName(swap.receiver_skill);
+
+    const youTeach =
+      swap.sender_id === user.id
+        ? getSkillName(swap.receiver_skill)
+        : getSkillName(swap.sender_skill);
+
+    return {
+      ...swap,
+      otherUserId,
+      otherUserName: otherUser?.name ?? "User",
+      otherUserLocation: otherUser?.location ?? "",
+      otherUserRating: otherUser?.rating ?? 0,
+      otherUserPhoto: otherUser?.profile_photo ?? "",
+      youLearn,
+      youTeach,
+    };
+  });
+
+  setSwaps(formattedSwaps);
+  setLoading(false);
+}
+loadSwaps();
+}, []);
+ const activeSwaps = swaps.filter(
+    (swap) => swap.status === "ACCEPTED"
+  );
+
+  const historySwaps = swaps.filter(
+    (swap) => swap.status === "COMPLETED"
+  );
   return (
     <main className="w-full bg-background min-h-screen">
       <div className="flex flex-col w-full">
@@ -11,7 +143,7 @@ export function MySwapsScreen() {
               <span className="text-on-surface font-semibold">My Swaps</span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container/10 text-tertiary font-label-sm text-[11px] font-bold">
                 <span className="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse" />
-                2 Active Exchanges
+                {swaps.length} Active Exchanges
               </span>
             </div>
             <div className="flex items-center gap-space-sm">
@@ -80,12 +212,12 @@ export function MySwapsScreen() {
           </div>
           <div className="bg-surface-container-low/70 p-2 rounded-2xl mb-space-lg flex flex-col md:flex-row md:items-center justify-between gap-space-md shadow-sm">
             <div className="flex items-center gap-1.5 bg-surface-container p-1 rounded-xl">
-              <button className="flex items-center gap-space-xs px-space-md py-2.5 rounded-xl font-headline-sm text-[15px] transition-all duration-200 bg-surface-container-lowest text-primary shadow-sm" id="tab-btn-active">
+              <button onClick={() => setActiveTab("active")} className="flex items-center gap-space-xs px-space-md py-2.5 rounded-xl font-headline-sm text-[15px] transition-all duration-200 bg-surface-container-lowest text-primary shadow-sm" id="tab-btn-active">
                 <span className="material-symbols-outlined text-[18px]">swap_horizontal_circle</span>
                 <span>Active Swaps</span>
                 <span className="w-5 h-5 rounded-full bg-primary text-on-primary font-label-sm text-[11px] flex items-center justify-center font-bold">2</span>
               </button>
-              <button className="flex items-center gap-space-xs px-space-md py-2.5 rounded-xl font-headline-sm text-[15px] transition-all duration-200 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/60" id="tab-btn-history">
+              <button onClick={() => setActiveTab("history")} className="flex items-center gap-space-xs px-space-md py-2.5 rounded-xl font-headline-sm text-[15px] transition-all duration-200 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/60" id="tab-btn-history">
                 <span className="material-symbols-outlined text-[18px]">history</span>
                 <span>Swap History</span>
                 <span className="w-5 h-5 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-[11px] flex items-center justify-center font-semibold">4</span>
@@ -102,349 +234,319 @@ export function MySwapsScreen() {
                   <option>In Progress</option>
                   <option>Ready to Complete</option>
                 </select>
-                <button className="p-2 bg-surface-container-lowest hover:bg-surface-container rounded-xl text-on-surface-variant transition-colors shadow-sm" title="Sort Order">
+                <button  className="p-2 bg-surface-container-lowest hover:bg-surface-container rounded-xl text-on-surface-variant transition-colors shadow-sm" title="Sort Order">
                   <span className="material-symbols-outlined text-[20px]">sort</span>
                 </button>
               </div>
-            </div>
           </div>
-          <div className="space-y-space-lg" id="section-active-swaps">
-            <div className="relative bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(79,70,229,0.04)] hover:shadow-xl transition-all duration-300">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pb-space-md border-b border-surface-container-high/60">
-                <div className="flex items-center gap-space-md">
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-sm bg-surface-variant">
-                      <img className="w-full h-full object-cover" data-alt="Close up photographic portrait of Priya Shah, a South Asian female graphic designer with warm studio lighting, modern creative workspace background with indigo accents, smiling friendly expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqa6d840vfqhCWjgBzyTR8lOplACl7yEBli3oxPE4zuuQMJ1FY9D7QiWBzPB1o02b5mGEPi4CdLlWhwoMfelGk_DP0PJiG3KCJNcf5Wb6K90WZt1_iu6pklz0qqHk0em_6DgVFFEgWY_GFd20qTqQYSESCK4TvZ110zNP6u7lwcYKhAcmtj4U2157nD9XxYksjXhewKovwxEA9dXK_1LDpvb4hQ6LtzzSuQTYX07gOEpGaBn7ICRq6sw" />
-                    </div>
-                    <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-surface-container-lowest" title="Online now" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-headline-sm text-headline-sm text-on-surface">Priya Shah</h3>
-                      <span className="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-[11px] font-bold">Top Mentor</span>
-                      <span className="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-[11px] font-bold">Fast Responder</span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 font-body-sm text-body-sm text-on-surface-variant">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[16px] text-outline">location_on</span>
-                        Ahmedabad, Gujarat
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1 font-semibold text-on-surface">
-                        <span className="material-symbols-outlined text-[16px] text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        4.9
-                        <span className="font-normal text-on-surface-variant">(24 reviews)</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-space-sm lg:justify-end">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 font-label-md text-xs font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    Active • On Track
-                  </span>
-                  <div className="px-3 py-1 rounded-xl bg-surface-container-low text-on-surface-variant font-body-sm text-xs flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-primary">event_upcoming</span>
-                    <span>
-                      Next:
-                      <strong>Tomorrow, 6:00 PM IST</strong>
-                    </span>
-                  </div>
-                  <a className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100/60 hover:bg-emerald-100 px-3 py-1 rounded-xl font-label-md text-xs font-bold transition-colors" href="#">
-                    <span className="material-symbols-outlined text-[16px]">video_camera_front</span>
-                    Open Session Room
-                  </a>
-                </div>
-              </div>
-              <div className="py-space-md grid grid-cols-1 md:grid-cols-2 gap-space-md relative">
-                <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-surface-container-lowest shadow-md items-center justify-center text-primary">
-                  <span className="material-symbols-outlined text-[20px]">sync_alt</span>
-                </div>
-                <div className="p-space-md rounded-2xl bg-surface-container-low/50 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-label-sm text-[11px] uppercase tracking-wider text-primary font-bold flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[16px]">school</span>
-                        You Teach
-                      </span>
-                      <span className="font-label-md text-xs font-bold text-on-surface">Session 4 of 6</span>
-                    </div>
-                    <h4 className="mt-2 font-headline-sm text-headline-sm text-on-surface">React Core & Modern Hooks</h4>
-                    <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">Custom hooks, State management with Context, and performance memoization patterns.</p>
-                  </div>
-                  <div className="mt-space-md pt-space-xs">
-                    <div className="flex items-center justify-between font-label-sm text-xs mb-1.5">
-                      <span className="text-on-surface-variant">Course Cadence</span>
-                      <span className="text-primary font-bold">65% Completed</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
-                      <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: "65%" }} />
-                    </div>
-                  </div>
-                </div>
-                <div className="p-space-md rounded-2xl bg-surface-container-low/50 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-label-sm text-[11px] uppercase tracking-wider text-tertiary-container font-bold flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[16px]">local_library</span>
-                        You Learn
-                      </span>
-                      <span className="font-label-md text-xs font-bold text-on-surface">Session 4 of 6</span>
-                    </div>
-                    <h4 className="mt-2 font-headline-sm text-headline-sm text-on-surface">Photoshop & Brand Design</h4>
-                    <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">Vector pen manipulation, raster masking techniques, brand guideline asset generation.</p>
-                  </div>
-                  <div className="mt-space-md pt-space-xs">
-                    <div className="flex items-center justify-between font-label-sm text-xs mb-1.5">
-                      <span className="text-on-surface-variant">Learning Trajectory</span>
-                      <span className="text-tertiary-container font-bold">65% Completed</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
-                      <div className="h-full rounded-full bg-tertiary-container transition-all duration-500" style={{ width: "65%" }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="pt-space-sm flex flex-col sm:flex-row items-center justify-between gap-space-sm">
-                <div className="flex items-center gap-2 font-body-sm text-xs text-on-surface-variant w-full sm:w-auto">
-                  <span className="material-symbols-outlined text-[16px] text-outline">calendar_month</span>
-                  <span>Started 5 Sept 2026</span>
-                  <span className="text-outline-variant">•</span>
-                  <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-tertiary">check_circle</span>
-                    Shared Weekends & Evenings
+         </div> 
+          {activeTab === "active" && (
+  <div className="space-y-space-lg" id="section-active-swaps">
+  {loading ? (
+    <div className="text-center py-10 text-on-surface-variant">
+      Loading active swaps...
+    </div>
+  ) : swaps.length === 0 ? (
+    <div className="text-center py-10 bg-surface-container-lowest rounded-2xl">
+      <span className="material-symbols-outlined text-4xl text-on-surface-variant">
+        swap_horizontal_circle
+      </span>
+      <p className="mt-3 font-headline-sm text-on-surface">
+        No active swaps yet
+      </p>
+      <p className="mt-1 text-sm text-on-surface-variant">
+        Accept a swap request to see it here.
+      </p>
+    </div>
+  ) : (
+    swaps.map((swap) => (
+      <div
+        key={swap.id}
+        className="relative bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-sm"
+      >
+        {/* User */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pb-space-md border-b border-surface-container-high/60">
+          <div className="flex items-center gap-space-md">
+            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface-variant">
+              {swap.otherUserPhoto ? (
+                <img
+                  src={swap.otherUserPhoto}
+                  alt={swap.otherUserName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="material-symbols-outlined text-2xl">
+                    person
                   </span>
                 </div>
-                <div className="flex items-center gap-space-xs w-full sm:w-auto justify-end">
-                  <button className="px-space-sm py-2 rounded-xl text-on-surface hover:bg-surface-container font-label-md text-label-md transition-colors">View Profile</button>
-                  <button className="px-space-md py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-label-md text-label-md transition-colors">View Swap Details</button>
-                  <button className="inline-flex items-center gap-1.5 px-space-md py-2 rounded-xl bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-md text-label-md transition-all shadow-sm">
-                    <span className="material-symbols-outlined text-[18px]">task_alt</span>
-                    Mark as Completed
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
-            <div className="relative bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(79,70,229,0.04)] hover:shadow-xl transition-all duration-300">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pb-space-md border-b border-surface-container-high/60">
-                <div className="flex items-center gap-space-md">
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-sm bg-surface-variant">
-                      <img className="w-full h-full object-cover" data-alt="Clean corporate and casual profile headshot of David Miller, an experienced product designer from Seattle, soft indoor daylight, slate navy apparel, friendly calm demeanour." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPG0ycCyzIm6srhBpR1pc8o_3FVNtf1Ni9vHO57XC9VmJJ93NM9lsLUM0Hej7rHcuzjjWEQL_K5dx1QcWIXznv6hcGtBaeYpRCLV2Bd9dO15NSt4apNbApiPl8WiFQUtT8zPz0-feslv2-pTJcBJVhxt1mVKGW7T6kO1tbGK3lPdOuKBwbr0DITWelXQc_sKMCpWZwXFYc2si5Hxd41upoGkOKKD_3ysXqlB5gTlzcIpAvALP2aJeARg" />
-                    </div>
-                    <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-surface-container-lowest" title="Available" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-headline-sm text-headline-sm text-on-surface">David Miller</h3>
-                      <span className="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-[11px] font-bold">Verified Swapper</span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 font-body-sm text-body-sm text-on-surface-variant">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[16px] text-outline">location_on</span>
-                        Seattle, WA
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1 font-semibold text-on-surface">
-                        <span className="material-symbols-outlined text-[16px] text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        4.8
-                        <span className="font-normal text-on-surface-variant">(19 reviews)</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-space-sm lg:justify-end">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 font-label-md text-xs font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    Active • Final Stage
+
+            <div>
+              <h3 className="font-headline-sm text-on-surface">
+                {swap.otherUserName}
+              </h3>
+
+              <div className="flex items-center gap-3 mt-1 text-sm text-on-surface-variant">
+                <span className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">
+                    location_on
                   </span>
-                  <div className="px-3 py-1 rounded-xl bg-surface-container-low text-on-surface-variant font-body-sm text-xs flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-primary">event_upcoming</span>
-                    <span>
-                      Next:
-                      <strong>Friday, 7:30 PM CST</strong>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="py-space-md grid grid-cols-1 md:grid-cols-2 gap-space-md relative">
-                <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-surface-container-lowest shadow-md items-center justify-center text-primary">
-                  <span className="material-symbols-outlined text-[20px]">sync_alt</span>
-                </div>
-                <div className="p-space-md rounded-2xl bg-surface-container-low/50 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-label-sm text-[11px] uppercase tracking-wider text-primary font-bold flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[16px]">code</span>
-                        You Teach
-                      </span>
-                      <span className="font-label-md text-xs font-bold text-on-surface">Session 3 of 4</span>
-                    </div>
-                    <h4 className="mt-2 font-headline-sm text-headline-sm text-on-surface">Modern CSS & Tailwind Architecture</h4>
-                    <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">Component breakdown, custom utility configurations, and accessible layout building.</p>
-                  </div>
-                  <div className="mt-space-md pt-space-xs">
-                    <div className="flex items-center justify-between font-label-sm text-xs mb-1.5">
-                      <span className="text-on-surface-variant">Exchange Status</span>
-                      <span className="text-primary font-bold">75% Completed</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
-                      <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: "75%" }} />
-                    </div>
-                  </div>
-                </div>
-                <div className="p-space-md rounded-2xl bg-surface-container-low/50 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-label-sm text-[11px] uppercase tracking-wider text-tertiary-container font-bold flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[16px]">token</span>
-                        You Learn
-                      </span>
-                      <span className="font-label-md text-xs font-bold text-on-surface">Session 3 of 4</span>
-                    </div>
-                    <h4 className="mt-2 font-headline-sm text-headline-sm text-on-surface">Figma Design Systems & Design Tokens</h4>
-                    <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">Auto-layout 5.0, variables, theme switches, and component library governance.</p>
-                  </div>
-                  <div className="mt-space-md pt-space-xs">
-                    <div className="flex items-center justify-between font-label-sm text-xs mb-1.5">
-                      <span className="text-on-surface-variant">Mastery Arc</span>
-                      <span className="text-tertiary-container font-bold">75% Completed</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
-                      <div className="h-full rounded-full bg-tertiary-container transition-all duration-500" style={{ width: "75%" }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="pt-space-sm flex flex-col sm:flex-row items-center justify-between gap-space-sm">
-                <div className="flex items-center gap-2 font-body-sm text-xs text-on-surface-variant w-full sm:w-auto">
-                  <span className="material-symbols-outlined text-[16px] text-outline">calendar_month</span>
-                  <span>Started 18 Aug 2026</span>
-                  <span className="text-outline-variant">•</span>
-                  <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-tertiary">check_circle</span>
-                    Shared Evenings PST
+                  {swap.otherUserLocation || "Location not added"}
+                </span>
+
+                <span>•</span>
+
+                <span className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">
+                    star
                   </span>
-                </div>
-                <div className="flex items-center gap-space-xs w-full sm:w-auto justify-end">
-                  <button className="px-space-sm py-2 rounded-xl text-on-surface hover:bg-surface-container font-label-md text-label-md transition-colors">View Profile</button>
-                  <button className="px-space-md py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-label-md text-label-md transition-colors">View Swap Details</button>
-                  <button className="inline-flex items-center gap-1.5 px-space-md py-2 rounded-xl bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-md text-label-md transition-all shadow-sm">
-                    <span className="material-symbols-outlined text-[18px]">task_alt</span>
-                    Mark as Completed
-                  </button>
-                </div>
+                  {swap.otherUserRating ?? 0}
+                </span>
               </div>
             </div>
           </div>
-          <div className="hidden space-y-space-lg" id="section-swap-history">
-            <div className="relative bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(79,70,229,0.04)]">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm pb-space-sm border-b border-surface-container-high/60">
-                <div className="flex items-center gap-space-md">
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden bg-surface-variant shadow-sm">
-                    <img className="w-full h-full object-cover" data-alt="Portrait photo of Rahul Mehta, professional software developer, clean backdrop, warm smile, modern spectacles, tech workspace setup." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCH4CwSPO0WKlzg_jnBkC1armADfGqNG68dUDLLHZ2hh45SIDyoVZ44akqStw8lnMLmuCjKl6GiyChhaP4RGWrwOTiP7v5ueKB3CtWK5JI-4W7C6DvkG0nb2sUfdeW0JXEasSpBjhcTeg0DKtztkq710TEwbXo3sgDI-hKDpCEpc1SFD7DdxQq2kM_-l8xbuKsM6k5YI4HyS6Ul2SRBUheA4L4es8B6bneP0w56jAk0P7snDzeZZcJo0g" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-headline-sm text-headline-sm text-on-surface">Rahul Mehta</h4>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-label-sm text-[11px] font-bold inline-flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">verified</span>
-                        Completed
-                      </span>
-                    </div>
-                    <div className="font-body-sm text-xs text-on-surface-variant flex items-center gap-2 mt-0.5">
-                      <span>Mumbai, IN</span>
-                      <span>•</span>
-                      <span>Completed 28 Aug 2026</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-space-xs">
-                  <button className="px-space-sm py-1.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-label-md text-xs transition-colors">View Public Review</button>
-                  <button className="px-space-sm py-1.5 rounded-xl bg-surface-container text-primary hover:bg-surface-container-high font-label-md text-xs transition-colors">Archive Details</button>
-                </div>
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            Active
+          </span>
+        </div>
+
+        {/* Skills */}
+        <div className="py-space-md grid grid-cols-1 md:grid-cols-2 gap-space-md">
+          <div className="p-space-md rounded-2xl bg-surface-container-low/50">
+            <span className="text-xs uppercase tracking-wider text-primary font-bold">
+              You Teach
+            </span>
+
+            <h4 className="mt-2 font-headline-sm text-on-surface">
+              {swap.youTeach}
+            </h4>
+
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Skill you are offering in this exchange.
+            </p>
+          </div>
+
+          <div className="p-space-md rounded-2xl bg-surface-container-low/50">
+            <span className="text-xs uppercase tracking-wider text-tertiary-container font-bold">
+              You Learn
+            </span>
+
+            <h4 className="mt-2 font-headline-sm text-on-surface">
+              {swap.youLearn}
+            </h4>
+
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Skill you will learn from this user.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="pt-space-sm flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+          <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+            <span className="material-symbols-outlined text-[16px]">
+              calendar_month
+            </span>
+
+            Started{" "}
+            {new Date(swap.created_at).toLocaleDateString("en-IN")}
+          </div>
+
+          <div className="flex items-center gap-space-xs">
+            <button
+              onClick={async () => {
+                const { error } = await supabase
+                  .from("swap_requests")
+                  .update({ status: "COMPLETED" })
+                  .eq("id", swap.id);
+
+                if (error) {
+                  console.error("COMPLETE SWAP ERROR:", error);
+                  alert("Failed to complete swap.");
+                  return;
+                }
+                setSwaps((current) =>
+                  current.map((item) =>
+                  item.id === swap.id
+                  ? { ...item, status: "COMPLETED" }
+                  : item
+                )
+              );
+               setActiveTab("history");
+                alert("Swap marked as completed! 🎉");
+              }}
+              className="inline-flex items-center gap-1.5 px-space-md py-2 rounded-xl bg-primary text-on-primary font-label-md text-sm"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                task_alt
+              </span>
+              Mark as Completed
+            </button>
+          </div>
+        </div>
+      </div>
+    ))   
+  )}
+</div>
+)}
+    {activeTab === "history" && (
+  <div
+    className={`space-y-space-lg ${
+      activeTab === "history" ? "" : "hidden"
+    }`}
+    id="section-swap-history"
+  >
+    {loading ? (
+      <div className="text-center py-10">
+        Loading history...
+      </div>
+    ) : historySwaps.length === 0 ? (
+      <div className="text-center py-10">
+        <p className="text-lg font-medium">
+          No completed swaps yet
+        </p>
+
+        <p className="text-sm text-on-surface-variant mt-2">
+          Your completed swaps will appear here.
+        </p>
+      </div>
+    ) : (
+      historySwaps.map((swap) => (
+        <div
+          key={swap.id}
+          className="relative bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-sm"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm pb-space-sm border-b border-surface-container-high/60">
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-headline-sm text-headline-sm text-on-surface">
+                  {swap.otherUserName}
+                </h4>
+
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
+                  Completed
+                </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-space-sm py-space-sm">
-                <div className="p-space-sm rounded-xl bg-surface-container-low/40">
-                  <span className="font-label-sm text-[10px] text-primary uppercase font-bold tracking-wider">You Taught</span>
-                  <div className="font-headline-sm text-sm text-on-surface font-semibold mt-0.5">Canva & Social Media Graphics</div>
-                </div>
-                <div className="p-space-sm rounded-xl bg-surface-container-low/40">
-                  <span className="font-label-sm text-[10px] text-tertiary-container uppercase font-bold tracking-wider">You Learned</span>
-                  <div className="font-headline-sm text-sm text-on-surface font-semibold mt-0.5">JavaScript Async & API Integration</div>
-                </div>
-              </div>
-              <div className="p-space-sm rounded-xl bg-amber-50/60 flex items-start gap-space-sm">
-                <span className="material-symbols-outlined text-[20px] text-amber-600 mt-0.5 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>format_quote</span>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1">
-                    <span className="font-label-md text-xs font-bold text-amber-900">5.0 Star Feedback</span>
-                    <span className="text-amber-700 text-xs">from Rahul</span>
-                  </div>
-                  <p className="font-body-sm text-xs text-amber-950 italic">"Alex is a fantastic mentor! He explained asynchronous JavaScript and Promise chaining with real-world scenarios that immediately made sense. Would gladly swap skills again anytime!"</p>
-                </div>
-              </div>
-            </div>
-            <div className="relative bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_16px_-4px_rgba(79,70,229,0.04)]">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm pb-space-sm border-b border-surface-container-high/60">
-                <div className="flex items-center gap-space-md">
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden bg-surface-variant shadow-sm">
-                    <img className="w-full h-full object-cover" data-alt="Portrait photo of Neha Gupta, smiling language coach and community educator, soft warm outdoor portrait, modern natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsU7Z3crdOMH_jOsKd35_PrlronUo3pYE2mJEM4VExoGEMwsboV5E6qAO57DCU8dDsVTlNWIBnIlZ8uA5PYEUp588fLTamtrzOOsva-RoNdOTB3v-DTbdXmtw2CUGdYYqnkBn2aNhSbpKLn0xPH6RUpJW6aN6Mb7AT9icEgtb3QfTusDde0NrmOOA-QrUUv-motgm1fuJI1z1zXBOKwa4dzDoUD_KfbZCM_l8MqLL4JAj44zyygziXcg" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-headline-sm text-headline-sm text-on-surface">Neha Gupta</h4>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-label-sm text-[11px] font-bold inline-flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">check</span>
-                        Completed
-                      </span>
-                    </div>
-                    <div className="font-body-sm text-xs text-on-surface-variant flex items-center gap-2 mt-0.5">
-                      <span>Completed 15 Aug 2026</span>
-                      <span>•</span>
-                      <span>Taught: Tailwind CSS ⇄ Learned: Spanish A1</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-primary font-label-sm text-xs font-semibold">
-                  <span className="material-symbols-outlined text-[14px]">rate_review</span>
-                  Feedback Pending
-                </div>
-              </div>
-              <div className="my-space-sm p-space-md rounded-2xl bg-gradient-to-r from-primary-fixed/30 via-surface-container-low to-tertiary-fixed/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-space-sm">
-                <div className="flex items-center gap-space-sm">
-                  <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[20px]">stars</span>
-                  </div>
-                  <div>
-                    <h5 className="font-headline-sm text-sm text-on-surface font-semibold">You haven't left a rating yet for Neha</h5>
-                    <p className="font-body-sm text-xs text-on-surface-variant">Help your peer establish credibility in the community by rating your 4 sessions.</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-space-md rounded-2xl bg-surface-container-low/60 space-y-space-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <span className="font-label-md text-xs font-bold text-on-surface">Rate Neha's Spanish Mentoring:</span>
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[26px] text-outline-variant hover:text-amber-400 cursor-pointer transition-transform hover:scale-110" id="star-icon-1">star</span>
-                      <span className="material-symbols-outlined text-[26px] text-outline-variant hover:text-amber-400 cursor-pointer transition-transform hover:scale-110" id="star-icon-2">star</span>
-                      <span className="material-symbols-outlined text-[26px] text-outline-variant hover:text-amber-400 cursor-pointer transition-transform hover:scale-110" id="star-icon-3">star</span>
-                      <span className="material-symbols-outlined text-[26px] text-outline-variant hover:text-amber-400 cursor-pointer transition-transform hover:scale-110" id="star-icon-4">star</span>
-                      <span className="material-symbols-outlined text-[26px] text-outline-variant hover:text-amber-400 cursor-pointer transition-transform hover:scale-110" id="star-icon-5">star</span>
-                    </div>
-                    <span className="font-label-sm text-xs text-primary font-bold ml-2" id="rating-feedback-label">Click stars to rate</span>
-                  </div>
-                </div>
-                <div>
-                  <textarea className="w-full p-space-sm bg-surface-container-lowest rounded-xl font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant/70 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" placeholder="Share how Neha helped you learn Spanish A1 conversational basics..." rows={2} />
-                </div>
-                <div className="flex justify-end">
-                  <button className="px-space-md py-2 rounded-xl bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-md text-label-md transition-all shadow-sm">Submit Feedback</button>
-                </div>
+
+              <div className="text-xs text-on-surface-variant mt-1">
+                {swap.otherUserLocation}
               </div>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-space-sm py-space-sm">
+            <div className="p-space-sm rounded-xl bg-surface-container-low/40">
+              <span className="text-[10px] text-primary uppercase font-bold tracking-wider">
+                You Taught
+              </span>
+
+              <div className="text-sm text-on-surface font-semibold mt-0.5">
+                {swap.youTeach}
+              </div>
+            </div>
+
+            <div className="p-space-sm rounded-xl bg-surface-container-low/40">
+              <span className="text-[10px] text-tertiary-container uppercase font-bold tracking-wider">
+                You Learned
+              </span>
+
+              <div className="text-sm text-on-surface font-semibold mt-0.5">
+                {swap.youLearn}
+              </div>
+              <div className="mt-space-sm p-space-md rounded-2xl bg-surface-container-low/60">
+  <div className="flex flex-col gap-3">
+    <span className="text-xs font-bold text-on-surface">
+      Rate this swap
+    </span>
+
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+  <button
+    key={star}
+    type="button"
+    onClick={() => setSelectedRating(star)}
+    className={`text-2xl transition-colors ${
+      star <= selectedRating
+        ? "text-amber-400"
+        : "text-outline-variant"
+    }`}
+  >
+    ★
+  </button>
+))}
+    </div>
+
+    <textarea
+  className="w-full p-space-sm bg-surface-container-lowest rounded-xl text-sm text-on-surface placeholder:text-on-surface-variant/70 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+  placeholder="Share your experience with this skill swap..."
+  rows={3}
+  value={feedback}
+  onChange={(e) => setFeedback(e.target.value)}
+/>
+
+    <div className="flex justify-end">
+     <button
+  type="button"
+  onClick={async () => {
+    if (selectedRating === 0) {
+      alert("Please select a rating ⭐");
+      return;
+    }
+
+    if (!feedback.trim()) {
+      alert("Please write some feedback 💬");
+      return;
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Please login first.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("ratings")
+      .insert({
+        swap_id: swap.id,
+        from_user: user.id,
+        to_user: swap.otherUserId,
+        rating: selectedRating,
+        feedback: feedback.trim(),
+      });
+
+    if (error) {
+      console.error("SUBMIT RATING ERROR:", error);
+      alert("Failed to submit feedback.");
+      return;
+    }
+
+    alert("Feedback submitted successfully! ⭐");
+
+    setSelectedRating(0);
+    setFeedback("");
+  }}
+  className="px-space-md py-2 rounded-xl bg-primary text-on-primary font-semibold hover:opacity-90 transition-all"
+>
+  Submit Feedback
+</button>
+    </div>
+  </div>
+</div>
+            </div>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
+
           <div className="mt-space-xl p-space-lg rounded-2xl bg-surface-container-lowest/80 shadow-[0_1px_3px_rgba(15,23,42,0.03)] flex flex-col md:flex-row items-center justify-between gap-space-md">
             <div className="flex items-center gap-space-md">
               <div className="w-12 h-12 rounded-2xl bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed shrink-0">

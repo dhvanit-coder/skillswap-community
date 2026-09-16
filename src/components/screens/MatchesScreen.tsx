@@ -1,5 +1,173 @@
 /** Imported Stitch screen (6). Static content until its feature phase is implemented. */
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 export function MatchesScreen() {
+  const [matches, setMatches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+  async function loadMatches() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    console.log("CURRENT USER:", user.id);
+
+    const { data: mySkills, error: mySkillsError } = await supabase
+      .from("user_skills")
+      .select("skill_id, type")
+      .eq("user_id", user.id);
+
+    if (mySkillsError) {
+      console.error("MY SKILLS ERROR:", mySkillsError);
+      setLoading(false);
+      return;
+    }
+
+    console.log("MY SKILLS:", mySkills);
+    const offeredSkillIds = (mySkills ?? [])
+  .filter((skill) => skill.type === "OFFER")
+  .map((skill) => skill.skill_id);
+
+const wantedSkillIds = (mySkills ?? [])
+  .filter((skill) => skill.type === "WANT")
+  .map((skill) => skill.skill_id);
+
+console.log("MY OFFERED SKILLS:", offeredSkillIds);
+console.log("MY WANTED SKILLS:", wantedSkillIds);
+const { data: possibleMatches, error: matchesError } = await supabase
+  .from("user_skills")
+  .select("user_id, skill_id, type")
+  .neq("user_id", user.id)
+  .eq("type", "OFFER")
+  .in("skill_id", wantedSkillIds);
+
+if (matchesError) {
+  console.error("MATCH SEARCH ERROR:", matchesError);
+  setLoading(false);
+  return;
+}
+
+console.log("POSSIBLE MATCHES:", possibleMatches);
+const possibleUserIds = [
+  ...new Set((possibleMatches ?? []).map((match) => match.user_id)),
+];
+
+let reciprocalMatches: any[] = [];
+
+if (possibleUserIds.length > 0 && offeredSkillIds.length > 0) {
+  const { data: wantedMatches, error: wantedMatchesError } =
+    await supabase
+      .from("user_skills")
+      .select("user_id, skill_id, type")
+      .in("user_id", possibleUserIds)
+      .eq("type", "WANT")
+      .in("skill_id", offeredSkillIds);
+
+  if (wantedMatchesError) {
+    console.error("RECIPROCAL MATCH ERROR:", wantedMatchesError);
+    setLoading(false);
+    return;
+  }
+
+  reciprocalMatches = wantedMatches ?? [];
+}
+
+console.log("RECIPROCAL MATCHES:", reciprocalMatches);
+const matchedUserIds = [
+  ...new Set(reciprocalMatches.map((match) => match.user_id)),
+];
+
+let profiles: any[] = [];
+
+if (matchedUserIds.length > 0) {
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, name, location, rating, profile_photo")
+    .in("id", matchedUserIds)
+    .eq("is_public", true);
+
+  if (profileError) {
+    console.error("LOAD MATCH PROFILES ERROR:", profileError);
+    setLoading(false);
+    return;
+  }
+
+  profiles = profileData ?? [];
+}
+
+console.log("MATCH PROFILES:", profiles);
+const skillIds = [
+  ...new Set(
+    reciprocalMatches
+      .map((match) => match.skill_id)
+      .filter((id): id is number => id !== null)
+  ),
+];
+
+let skills: any[] = [];
+
+if (skillIds.length > 0) {
+  const { data: skillData, error: skillError } = await supabase
+    .from("skills")
+    .select("id, name")
+    .in("id", skillIds);
+
+  if (skillError) {
+    console.error("LOAD MATCH SKILLS ERROR:", skillError);
+    setLoading(false);
+    return;
+  }
+
+  skills = skillData ?? [];
+}
+
+console.log("MATCH SKILLS:", skills);
+const formattedMatches = reciprocalMatches
+  .map((match) => {
+    const profile = profiles.find(
+      (item) => item.id === match.user_id
+    );
+
+    const skill = skills.find(
+      (item) => item.id === match.skill_id
+    );
+
+    if (!profile || !skill) {
+      return null;
+    }
+
+    const wantedSkill = skills.find(
+      (item) =>
+        item.id === offeredSkillIds[0]
+    );
+
+    return {
+      userId: profile.id,
+      name: profile.name,
+      location: profile.location ?? "",
+      rating: profile.rating ?? 0,
+      profilePhoto: profile.profile_photo ?? "",
+      offeredSkillId: match.skill_id,
+      offeredSkillName: skill.name,
+      wantedSkillId: wantedSkill?.id ?? null,
+      wantedSkillName: wantedSkill?.name ?? "Skill",
+    };
+  })
+  .filter(Boolean);
+
+setMatches(formattedMatches);
+console.log("FORMATTED MATCHES:", formattedMatches);
+
+    setLoading(false);
+  }
+
+  loadMatches();
+}, []);
   return (
     <main className="w-full bg-surface min-h-[calc(100vh-18rem)]">
       <div className="flex flex-col w-full">

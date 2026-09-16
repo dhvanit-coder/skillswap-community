@@ -1,7 +1,78 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { supabase } from "@/lib/supabase";
 
 /** Imported Stitch screen (7). Static content until its feature phase is implemented. */
 export function SwapRequestsScreen() {
+   const [requests, setRequests] = useState<any[]>([]);
+   const [loading, setLoading] = useState(true);
+    useEffect(() => {
+    async function loadRequests() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("swap_requests")
+        .select(`
+          id,
+          sender_id,
+          receiver_id,
+          sender_skill,
+          receiver_skill,
+          status,
+          created_at
+        `)
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("LOAD REQUESTS ERROR:", error);
+        setLoading(false);
+        return;
+      }
+
+      const senderIds = [...new Set((data ?? []).map((request) => request.sender_id))];
+
+let senderProfiles: any[] = [];
+
+if (senderIds.length > 0) {
+  const { data: profiles, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, name, rating, location")
+    .in("id", senderIds);
+
+  if (profileError) {
+    console.error("LOAD SENDER PROFILES ERROR:", profileError);
+  } else {
+    senderProfiles = profiles ?? [];
+  }
+}
+
+const formattedRequests = (data ?? []).map((request) => {
+  const sender = senderProfiles.find(
+    (profile) => profile.id === request.sender_id
+  );
+
+  return {
+    ...request,
+    senderName: sender?.name ?? "User",
+    senderRating: sender?.rating ?? 0,
+    senderLocation: sender?.location ?? "",
+  };
+});
+
+setRequests(formattedRequests);
+setLoading(false);
+    }
+
+    loadRequests();
+  }, []);
   return (
     <main className="w-full bg-surface min-h-[calc(100vh-18rem)]">
       <div className="flex flex-col w-full">
@@ -131,204 +202,125 @@ export function SwapRequestsScreen() {
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
-            <div className="flex flex-col gap-space-md" id="requestsFeedContainer">
-              <article className="request-card bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm hover:shadow-md transition-all border border-outline-variant/30 flex flex-col gap-space-md" data-avatar-initials="RM" data-direction="RECEIVED" data-id="req-1" data-location="Ahmedabad, Gujarat" data-message="Hi Alex! I noticed your React mentorship on the Smart Matches feed. I'm building a portfolio site and would love to exchange 4 weekly 1-on-1 sessions of advanced Photoshop & UI asset workflows for React fundamentals." data-name="Rahul Mehta" data-offering="Photoshop [Expert], Lightroom [Adv]" data-rating="4.7" data-reviews="18" data-schedule="Weekday Evenings (IST)" data-seeking="React.js [Needs Beg/Int]" data-skills="photoshop lightroom react.js ui design" data-status="PENDING">
-                <div className="flex flex-wrap items-start justify-between gap-space-sm">
-                  <div className="flex items-center gap-space-sm">
-                    <div className="w-14 h-14 rounded-2xl bg-secondary-fixed text-primary flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-inner shrink-0">RM</div>
-                    <div className="flex flex-col">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Rahul Mehta</h2>
-                        <span className="inline-flex items-center gap-1 text-label-sm font-label-sm text-on-surface bg-surface-container-low px-2 py-0.5 rounded-md">
-                          <span className="material-symbols-outlined text-[15px] text-amber-500 fill-current" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                          4.7 (18 reviews)
-                        </span>
-                        <span className="text-label-sm font-label-sm text-outline flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[14px]">location_on</span>
-                          Ahmedabad, Gujarat
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="font-label-sm text-label-sm text-primary font-medium flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[16px]">south_east</span>
-                          Incoming Request
-                        </span>
-                        <span className="text-outline text-label-sm">•</span>
-                        <span className="text-label-sm font-label-sm text-on-surface-variant">2 hours ago</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-label-sm font-label-sm bg-amber-50 text-amber-800 border border-amber-200/60 font-semibold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
-                      Pending Review
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-surface-container-low/70 rounded-xl p-space-sm md:p-space-md grid grid-cols-1 md:grid-cols-11 gap-space-sm items-center border border-outline-variant/20">
-                  <div className="md:col-span-5 flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5 text-primary font-label-sm text-label-sm font-bold tracking-wide uppercase">
-                      <span className="material-symbols-outlined text-[18px]">school</span>
-                      They Offer to Teach
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      <span className="px-2.5 py-1 rounded-lg bg-surface-container-lowest text-primary font-label-sm text-label-sm font-semibold shadow-xs border border-primary/20">
-                        Photoshop
-                        <span className="text-primary/70 font-normal">[Expert]</span>
-                      </span>
-                      <span className="px-2.5 py-1 rounded-lg bg-surface-container-lowest text-primary font-label-sm text-label-sm font-semibold shadow-xs border border-primary/20">
-                        Lightroom
-                        <span className="text-primary/70 font-normal">[Adv]</span>
-                      </span>
-                    </div>
-                  </div>
-                  <div className="md:col-span-1 flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-surface-container-lowest text-on-surface-variant shadow-sm flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[18px] text-primary">swap_horiz</span>
-                    </div>
-                  </div>
-                  <div className="md:col-span-5 flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5 text-tertiary-container font-label-sm text-label-sm font-bold tracking-wide uppercase">
-                      <span className="material-symbols-outlined text-[18px]">psychology</span>
-                      In Exchange For
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      <span className="px-2.5 py-1 rounded-lg bg-tertiary-fixed/30 text-tertiary font-label-sm text-label-sm font-semibold shadow-xs border border-tertiary/20">
-                        React.js
-                        <span className="text-tertiary/80 font-normal">[Needs Beg/Int]</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-surface-container-lowest rounded-xl p-3.5 border-l-4 border-primary bg-gradient-to-r from-primary/5 via-transparent to-transparent flex flex-col gap-2">
-                  <p className="font-body-md text-body-md text-on-surface italic">"Hi Alex! I noticed your React mentorship on the Smart Matches feed. I'm building a portfolio site and would love to exchange 4 weekly 1-on-1 sessions of advanced Photoshop & UI asset workflows for React fundamentals."</p>
-                  <div className="flex flex-wrap items-center gap-4 text-body-sm font-body-sm text-on-surface-variant pt-1 border-t border-outline-variant/20">
-                    <span className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-outline text-[18px]">calendar_today</span>
-                      <span>
-                        Proposed:
-                        <strong>Weekday Evenings (IST)</strong>
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-outline text-[18px]">update</span>
-                      <span>
-                        Format:
-                        <strong>4 weekly sessions • 60 mins each</strong>
-                      </span>
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-space-sm pt-2 border-t border-outline-variant/20">
-                  <button className="font-label-md text-label-md text-primary hover:text-on-primary-fixed-variant flex items-center gap-1 transition-colors py-1">
-                    <span className="material-symbols-outlined text-[18px]">badge</span>
-                    View Swap Dossier & Profile
-                  </button>
-                  <div className="flex items-center gap-space-xs ml-auto">
-                    <button className="px-4 py-2 rounded-xl border border-error/40 text-error hover:bg-error-container/40 font-label-md text-label-md transition-colors flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[18px]">close</span>
-                      Decline
-                    </button>
-                    <button className="px-5 py-2 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md shadow-sm hover:shadow-md transition-all flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                      Accept Request
-                    </button>
-                  </div>
-                </div>
-              </article>
-              <article className="request-card bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm hover:shadow-md transition-all border border-outline-variant/30 flex flex-col gap-space-md" data-avatar-initials="PS" data-direction="RECEIVED" data-id="req-2" data-location="Ahmedabad, India" data-message="Hey Alex! Loved your CSS architecture tips. Looking for reciprocal bi-weekly pair coding sessions to level up on Node APIs while mentoring you on branding." data-name="Priya Shah" data-offering="Graphic Design & Brand Identity" data-rating="4.9" data-reviews="24" data-schedule="Saturday & Sunday Mornings" data-seeking="JavaScript & Node.js API basics" data-skills="graphic design brand identity javascript node.js api" data-status="PENDING">
-                <div className="flex flex-wrap items-start justify-between gap-space-sm">
-                  <div className="flex items-center gap-space-sm">
-                    <div className="w-14 h-14 rounded-2xl bg-tertiary-fixed-dim text-on-tertiary-fixed flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-inner shrink-0">PS</div>
-                    <div className="flex flex-col">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Priya Shah</h2>
-                        <span className="inline-flex items-center gap-1 text-label-sm font-label-sm text-on-surface bg-surface-container-low px-2 py-0.5 rounded-md">
-                          <span className="material-symbols-outlined text-[15px] text-amber-500 fill-current" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                          4.9 (24 reviews)
-                        </span>
-                        <span className="px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-secondary text-label-sm font-label-sm font-medium">Top Mentor</span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="font-label-sm text-label-sm text-primary font-medium flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[16px]">south_east</span>
-                          Incoming Request
-                        </span>
-                        <span className="text-outline text-label-sm">•</span>
-                        <span className="text-label-sm font-label-sm text-on-surface-variant">Yesterday</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-label-sm font-label-sm bg-amber-50 text-amber-800 border border-amber-200/60 font-semibold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
-                      Pending Review
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-surface-container-low/70 rounded-xl p-space-sm md:p-space-md grid grid-cols-1 md:grid-cols-11 gap-space-sm items-center border border-outline-variant/20">
-                  <div className="md:col-span-5 flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5 text-primary font-label-sm text-label-sm font-bold tracking-wide uppercase">
-                      <span className="material-symbols-outlined text-[18px]">school</span>
-                      They Offer to Teach
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      <span className="px-2.5 py-1 rounded-lg bg-surface-container-lowest text-primary font-label-sm text-label-sm font-semibold shadow-xs border border-primary/20">Graphic Design</span>
-                      <span className="px-2.5 py-1 rounded-lg bg-surface-container-lowest text-primary font-label-sm text-label-sm font-semibold shadow-xs border border-primary/20">Brand Identity Systems</span>
-                    </div>
-                  </div>
-                  <div className="md:col-span-1 flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-surface-container-lowest text-on-surface-variant shadow-sm flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[18px] text-primary">swap_horiz</span>
-                    </div>
-                  </div>
-                  <div className="md:col-span-5 flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5 text-tertiary-container font-label-sm text-label-sm font-bold tracking-wide uppercase">
-                      <span className="material-symbols-outlined text-[18px]">psychology</span>
-                      In Exchange For
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      <span className="px-2.5 py-1 rounded-lg bg-tertiary-fixed/30 text-tertiary font-label-sm text-label-sm font-semibold shadow-xs border border-tertiary/20">JavaScript</span>
-                      <span className="px-2.5 py-1 rounded-lg bg-tertiary-fixed/30 text-tertiary font-label-sm text-label-sm font-semibold shadow-xs border border-tertiary/20">Node.js API Basics</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-surface-container-lowest rounded-xl p-3.5 border-l-4 border-primary bg-gradient-to-r from-primary/5 via-transparent to-transparent flex flex-col gap-2">
-                  <p className="font-body-md text-body-md text-on-surface italic">"Hey Alex! Loved your CSS architecture tips. Looking for reciprocal bi-weekly pair coding sessions to level up on Node APIs while mentoring you on branding."</p>
-                  <div className="flex flex-wrap items-center gap-4 text-body-sm font-body-sm text-on-surface-variant pt-1 border-t border-outline-variant/20">
-                    <span className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-outline text-[18px]">calendar_today</span>
-                      <span>
-                        Proposed:
-                        <strong>Saturday & Sunday Mornings</strong>
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-outline text-[18px]">pin_drop</span>
-                      <span>
-                        Location:
-                        <strong>Ahmedabad, India (Hybrid or Remote)</strong>
-                      </span>
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-space-sm pt-2 border-t border-outline-variant/20">
-                  <button className="font-label-md text-label-md text-primary hover:text-on-primary-fixed-variant flex items-center gap-1 transition-colors py-1">
-                    <span className="material-symbols-outlined text-[18px]">badge</span>
-                    View Swap Dossier & Profile
-                  </button>
-                  <div className="flex items-center gap-space-xs ml-auto">
-                    <button className="px-4 py-2 rounded-xl border border-error/40 text-error hover:bg-error-container/40 font-label-md text-label-md transition-colors flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[18px]">close</span>
-                      Decline
-                    </button>
-                    <button className="px-5 py-2 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md shadow-sm hover:shadow-md transition-all flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                      Accept Request
-                    </button>
-                  </div>
-                </div>
-              </article>
+            {requests.length > 0 ? (
+  requests.map((request) => (
+    <article
+      key={request.id}
+      className="request-card bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm hover:shadow-md transition-all border border-outline-variant/30 flex flex-col gap-space-md"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-space-sm">
+        <div className="flex items-center gap-space-sm">
+          <div className="w-14 h-14 rounded-2xl bg-secondary-fixed text-primary flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-inner shrink-0">
+            {request.senderName
+              .split(" ")
+              .map((word: string) => word[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase()}
+          </div>
+
+          <div className="flex flex-col">
+            <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+              {request.senderName}
+            </h2>
+
+            <div className="flex items-center gap-2 mt-1">
+              <span className="font-label-sm text-label-sm text-primary font-medium flex items-center gap-1">
+                <span className="material-symbols-outlined text-[16px]">
+                  south_east
+                </span>
+                Incoming Request
+              </span>
+
+              <span className="text-outline text-label-sm">•</span>
+
+              <span className="text-label-sm text-on-surface-variant">
+                {request.status}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <span className="px-3 py-1 rounded-full text-label-sm bg-amber-50 text-amber-800 border border-amber-200/60 font-semibold">
+          {request.status}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-outline-variant/20">
+        {request.status === "PENDING" && (
+          <>
+          <button
+  onClick={async () => {
+    const { error } = await supabase
+      .from("swap_requests")
+      .update({ status: "REJECTED" })
+      .eq("id", request.id);
+
+    if (error) {
+      console.error("REJECT REQUEST ERROR:", error);
+      alert("Failed to reject request.");
+      return;
+    }
+
+    setRequests((current) =>
+      current.map((item) =>
+        item.id === request.id
+          ? { ...item, status: "REJECTED" }
+          : item
+      )
+    );
+
+    alert("Swap request rejected.");
+  }}
+  className="px-4 py-2 rounded-xl border border-error/40 text-error hover:bg-error-container/40 font-label-md transition-colors"
+>
+  <span className="material-symbols-outlined text-[18px] align-middle mr-1">
+    close
+  </span>
+  Decline
+</button>  
+
+           <button
+  onClick={async () => {
+    const { error } = await supabase
+      .from("swap_requests")
+      .update({ status: "ACCEPTED" })
+      .eq("id", request.id);
+
+    if (error) {
+      console.error("ACCEPT REQUEST ERROR:", error);
+      alert("Failed to accept request.");
+      return;
+    }
+
+    setRequests((current) =>
+      current.map((item) =>
+        item.id === request.id
+          ? { ...item, status: "ACCEPTED" }
+          : item
+      )
+    );
+
+    alert("Swap request accepted! 🎉");
+  }}
+  className="px-5 py-2 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-label-md shadow-sm transition-all"
+>
+  <span className="material-symbols-outlined text-[18px] align-middle mr-1">
+    check_circle
+  </span>
+  Accept Request
+</button>
+          </>
+        )}
+      </div>
+    </article>
+  ))
+) : (
+  <div className="text-center p-8 text-slate-500">
+    No swap requests found.
+  </div>
+)}
+
               <article className="request-card bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm hover:shadow-md transition-all border border-outline-variant/30 flex flex-col gap-space-md" data-avatar-initials="DM" data-direction="RECEIVED" data-id="req-3" data-location="Berlin, Germany" data-message="Active synergy established. Progressing through design token automated CI sync to React component libraries." data-name="David Miller" data-offering="Figma Tokens & Design Systems" data-rating="4.8" data-reviews="31" data-schedule="Tuesdays 6:00 PM CET" data-seeking="React Core Architecture" data-skills="figma design tokens react core architecture" data-status="ACCEPTED">
                 <div className="flex flex-wrap items-start justify-between gap-space-sm">
                   <div className="flex items-center gap-space-sm">
@@ -873,7 +865,6 @@ export function SwapRequestsScreen() {
             </div>
           </div>
         </div>
-      </div>
     </main>
   );
 }
